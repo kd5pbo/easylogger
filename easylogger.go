@@ -94,10 +94,9 @@ import (
  */
 
 var (
-	// L is the default LogSet used when the top-level functions (which
+	// def is the default LogSet used when the top-level functions (which
 	// are wrappers for L's methods and variables) are called.
-	L         = new(LogSet)
-	madeFlags = false
+	def = new(LogSet)
 )
 
 // Generate verbose() and debug() functions.
@@ -113,67 +112,54 @@ func Generate(makeFlags bool) (verbose,
 	debug func(format string, args ...interface{})) {
 	/* Set flags if we're meant to */
 	if makeFlags {
-		L.VerboseOn = flag.Bool("verbose", false, "Log verbosely")
-		L.DebugOn = flag.Bool("debug", false, "Log debugging messages")
+		def.verboseOn = flag.Bool("verbose", false, "Log verbosely")
+		def.debugOn = flag.Bool("debug", false, "Log debugging messages")
 	}
 
-	return L.Verbose, L.Debug
+	return def.Verbose, def.Debug
 }
 
-// Set a specific logger (e.g. the output of syslog.New()) to be used.  May
-// be nil to use the standard logger.
-func SetLog(l *log.Logger) {
-	L.Logger = l
-}
-
-/* logSwitch switches on/off verbose and debug logging */
-func logSwitch(v, d bool) {
-	/* Make sure we have bools allocated */
-	if nil == L.VerboseOn {
-		b := false
-		L.VerboseOn = &b
-	}
-	if nil == L.DebugOn {
-		b := false
-		L.DebugOn = &b
-	}
-	/* Switch the switches */
-	*L.VerboseOn = v
-	*L.DebugOn = d
+// SetLogger causes l to be used for log output.  This may be nil to use the
+// default logger.
+func SetLogger(l *log.Logger) {
+	def.SetLogger(l)
 }
 
 // LogVerbose turns on Verbose logging
 // (verbose will log messages, debug won't).
-func LogVerbose() { logSwitch(true, false) }
+func LogVerbose() { def.LogVerbose() }
 
 // LogDebug turns on Debuging log messages
 // (both verbose and debug will log messages).
-func LogDebug() { logSwitch(true, true) }
+func LogDebug() { def.LogDebug() }
 
 /* LogNone turns off both verbose and debug logging. */
-func LogNone() { logSwitch(false, false) }
+func LogNone() { def.LogNone() }
 
-// LogDebugOnly logs verbose messages, but not debug messages
+// LogdebugOnly logs verbose messages, but not debug messages
 // (verbose will not log, debug will).
-func LogDebugOnly() { logSwitch(false, true) }
+func LogDebugOnly() { def.LogDebugOnly() }
 
 // LogSet is a self-contained set of logging functions and variables.  It can
 // be used to turn on and off logging for various parts of large programs.
 type LogSet struct {
-	VerboseOn *bool       /* Enables verbose logging */
-	DebugOn   *bool       /* Enables debug logging */
-	Logger    *log.Logger /* Alternate logger (such as syslog). */
+	verboseOn *bool       /* Enables verbose logging */
+	debugOn   *bool       /* Enables debug logging */
+	logger    *log.Logger /* Alternate logger (such as syslog). */
+	changed   bool        /* One of the Log* functions has been called */
+
 }
 
-// New returns a pointer to a new LogSet with both VerboseOn and DebugOn
-// allocated.
+// New returns a pointer to a new LogSet.
 func New() *LogSet {
 	/* Storage for the Ons */
 	v := false
 	d := false
 	return &LogSet{
-		VerboseOn: &v,
-		DebugOn:   &d,
+		verboseOn: &v,
+		debugOn:   &d,
+		logger:    nil,
+		changed:   false,
 	}
 }
 
@@ -184,8 +170,8 @@ func (l *LogSet) log(doit *bool, format string, args ...interface{}) {
 		return
 	}
 	/* Work out which logger to use */
-	if l.Logger != nil { /* User-assigned logger */
-		l.Logger.Printf(format, args...)
+	if l.logger != nil { /* User-assigned logger */
+		l.logger.Printf(format, args...)
 	} else { /* Default logger */
 		log.Printf(format, args...)
 	}
@@ -193,10 +179,55 @@ func (l *LogSet) log(doit *bool, format string, args ...interface{}) {
 
 /* Verbose logs a message if verbose messages are turned on */
 func (l *LogSet) Verbose(format string, args ...interface{}) {
-	l.log(l.VerboseOn, format, args)
+	doit := *l.verboseOn
+	/* If the state hasn't been changed (i.e. set by the flags), verbose()
+	if debug is set */
+	if !l.changed && !*l.verboseOn && *l.debugOn {
+		doit = true
+	}
+	l.log(&doit, format, args...)
 }
 
 /* Debug logs a message if debugging messages are turned on */
 func (l *LogSet) Debug(format string, args ...interface{}) {
-	l.log(l.DebugOn, format, args)
+	l.log(l.debugOn, format, args...)
+}
+
+/* logSwitch switches on/off verbose and debug logging */
+func (l *LogSet) logSwitch(v, d bool) {
+	/* Make sure we have bools allocated */
+	if nil == l.verboseOn {
+		b := false
+		l.verboseOn = &b
+	}
+	if nil == l.debugOn {
+		b := false
+		l.debugOn = &b
+	}
+	/* Switch the switches */
+	*l.verboseOn = v
+	*l.debugOn = d
+	/* Note there's been a change */
+	l.changed = true
+}
+
+// LogVerbose turns on Verbose logging
+// (verbose will log messages, debug won't).
+func (l *LogSet) LogVerbose() { l.logSwitch(true, false) }
+
+// LogDebug turns on Debuging log messages
+// (both verbose and debug will log messages).
+func (l *LogSet) LogDebug() { l.logSwitch(true, true) }
+
+/* LogNone turns off both verbose and debug logging. */
+func (l *LogSet) LogNone() { l.logSwitch(false, false) }
+
+// LogdebugOnly logs verbose messages, but not debug messages
+// (verbose will not log, debug will).
+func (l *LogSet) LogDebugOnly() { l.logSwitch(false, true) }
+
+// SetLogger causes logger to be used for log output.  This may be nil to use
+// the default logger.
+func (l *LogSet) SetLogger(logger *log.Logger) {
+	l.logger = logger
 }
