@@ -103,7 +103,8 @@ var (
 //
 // If makeFlags is true, the
 // appropriate functions from the flag package will be called to add -verbose
-// and -debug, with the effect of turning on verbose() and debug() output.
+// and -debug, with the effect of turning on verbose() and debug() output, as
+// if LogVerbose() LogDebug(), respectively, had been called.
 //
 // Calling this function with makeFlags set to true after a call to any of the
 // Log* functions will result in the values from the command line being
