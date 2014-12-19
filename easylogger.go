@@ -4,28 +4,31 @@
 // functions as needed.
 //
 //    /* Generate verbose() and debug() */
-//    verbose, debug, := easylogger.Generate(false)
+//    var verbose, debug = easylogger.Generate(false)
 //
-//    /* No logging is on by default */
-//    verbose("This message will not be logged.")
-//    debug("This message won't, either.")
-//    log.Printf("This one still will, though.")
+//    func main(){
 //
-//    /* Turn on debug logging */
-//    easylogger.LogDebug()
-//    debug("Debugging messages will be logged.")
-//    verbose("Verbose messages will be, too.")
+//            /* No logging is on by default */
+//            verbose("This message will not be logged.")
+//            debug("This message won't, either.")
+//            log.Printf("This one still will, though.")
 //
-//    /* Turn on verbose logging */
-//    easylogger.LogVerbose()
-//    verbose("Verbose messages will be logged.")
-//    debug("Debugging messages will not be logged.")
+//            /* Turn on debug logging */
+//            easylogger.LogDebug()
+//            debug("Debugging messages will be logged.")
+//            verbose("Verbose messages will be, too.")
 //
-//    /* Turn off esaylogger logging */
-//    easylogger.LogNone()
-//    debug("This message will not be logged.")
-//    verbose("This one won't, either.")
-//    log.Printf("This one still will, though.")
+//            /* Turn on verbose logging */
+//            easylogger.LogVerbose()
+//            verbose("Verbose messages will be logged.")
+//            debug("Debugging messages will not be logged.")
+//
+//            /* Turn off esaylogger logging */
+//            easylogger.LogNone()
+//            debug("This message will not be logged.")
+//            verbose("This one won't, either.")
+//            log.Printf("This one still will, though.")
+//    }
 //
 // Optionally, easylogger can add two flags, "debug" and "verbose" to the
 // default set of flags if the flag package in the standard go distribution is
