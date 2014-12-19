@@ -1,9 +1,9 @@
 // Package easylogger provides an easy-to-use logging interface using the log
-// package in the standard go distribution.  Basic usage is to call Generate()
+// package in the standard go distribution.  Basic usage is to call Generate
 // to generate debug and verbose functions, and then to use the generated
 // functions as needed.
 //
-//    /* Generate verbose() and debug() */
+//    /* Generate verbose and debug */
 //    var verbose, debug = easylogger.Generate(false)
 //
 //    func main(){
@@ -37,8 +37,8 @@
 //     verbose, debug := easyLogger.New(true)
 //
 // The program may be invoked with -verbose or -debug with the same effect as
-// calling LogVerbose() or LogDebug(), respectively.  LogVerbose() and
-// LogDebug() may still be called later to change the behavior of the generated
+// calling LogVerbose or LogDebug, respectively.  LogVerbose and
+// LogDebug may still be called later to change the behavior of the generated
 // functions.
 //
 // The generated functions take arguments in the same format as log.Printf
@@ -99,12 +99,12 @@ var (
 	def = new(LogSet)
 )
 
-// Generate verbose() and debug() functions.
+// Generate verbose and debug functions.
 //
 // If makeFlags is true, the
 // appropriate functions from the flag package will be called to add -verbose
-// and -debug, with the effect of turning on verbose() and debug() output, as
-// if LogVerbose() LogDebug(), respectively, had been called.
+// and -debug, with the effect of turning on verbose and debug output, as
+// if LogVerbose LogDebug, respectively, had been called.
 //
 // Calling this function with makeFlags set to true after a call to any of the
 // Log* functions will result in the values from the command line being
@@ -141,6 +141,29 @@ func LogNone() { def.LogNone() }
 // (verbose will not log, debug will).
 func LogDebugOnly() { def.LogDebugOnly() }
 
+// Pause pauses logging.  Calls to Verbose and Debug will block until Resume
+// is called.  Aside from being an excellent source of deadlocks, this allows
+// for logfile rotation without risk of losing data.  See Resume for an
+// example.
+func Pause() {
+	def.Pause()
+}
+
+// Resume resumes logging.  This should be called soon after Pause.  Pause and
+// Resume can be used to safely change logfiles.
+//
+//    func changeLogFile(f string) {
+//            easylogger.Pause()
+//            defer easylogger.Resume()
+//            o, err := os.OpenFile(f, os.O_CREATE|os.O_APPEND, 0644)
+//            /* Error checking goes here */
+//            log.SetOutput(o)
+//            return
+//    }
+func Resume() {
+	def.Resume()
+}
+
 // LogSet is a self-contained set of logging functions and variables.  It can
 // be used to turn on and off logging for various parts of large programs.
 type LogSet struct {
@@ -148,6 +171,7 @@ type LogSet struct {
 	debugOn   *bool       /* Enables debug logging */
 	logger    *log.Logger /* Alternate logger (such as syslog). */
 	changed   bool        /* One of the Log* functions has been called */
+	m         *sync.Mutex /* Mutex held during writes */
 
 }
 
@@ -161,6 +185,7 @@ func New() *LogSet {
 		debugOn:   &d,
 		logger:    nil,
 		changed:   false,
+		m:         &sync.Mutex{},
 	}
 }
 
@@ -181,7 +206,7 @@ func (l *LogSet) log(doit *bool, format string, args ...interface{}) {
 /* Verbose logs a message if verbose messages are turned on */
 func (l *LogSet) Verbose(format string, args ...interface{}) {
 	doit := *l.verboseOn
-	/* If the state hasn't been changed (i.e. set by the flags), verbose()
+	/* If the state hasn't been changed (i.e. set by the flags), verbose
 	if debug is set */
 	if !l.changed && !*l.verboseOn && *l.debugOn {
 		doit = true
@@ -231,4 +256,17 @@ func (l *LogSet) LogDebugOnly() { l.logSwitch(false, true) }
 // the default logger.
 func (l *LogSet) SetLogger(logger *log.Logger) {
 	l.logger = logger
+}
+
+// Pause pauses logging.  Calls to Verbose and Debug will block until Resume
+// is called.  Aside from being an excellent source of deadlocks, this allows
+// for logfile rotation without risk of losing data.  See Resume for an
+// example.
+func (l *Logset) Pause() {
+	l.m.Lock()
+}
+
+// Resume resumes logging.  This should be called soon after Pause.
+func (l *Logset) Resume() {
+	l.m.Unlock()
 }
