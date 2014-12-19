@@ -8,7 +8,7 @@ Please see https://godoc.org/github.com/kd5pbo/easylogger for documentation.
 Quickstart
 ----------
 ```go
-var verbose, debug = easyLogger.Generate()
+var verbose, debug = easylogger.Generate()
 func main() {
         
         /* Enable verbose logging */
