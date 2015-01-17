@@ -34,7 +34,7 @@
 // default set of flags if the flag package in the standard go distribution is
 // being used:
 //
-//     verbose, debug := easyLogger.New(true)
+//     verbose, debug := easyLogger.Generate(true)
 //
 // The program may be invoked with -verbose or -debug with the same effect as
 // calling LogVerbose or LogDebug, respectively.  LogVerbose and
