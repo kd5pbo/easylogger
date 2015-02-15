@@ -263,11 +263,11 @@ func (l *LogSet) SetLogger(logger *log.Logger) {
 // is called.  Aside from being an excellent source of deadlocks, this allows
 // for logfile rotation without risk of losing data.  See Resume for an
 // example.
-func (l *Logset) Pause() {
+func (l *LogSet) Pause() {
 	l.m.Lock()
 }
 
 // Resume resumes logging.  This should be called soon after Pause.
-func (l *Logset) Resume() {
+func (l *LogSet) Resume() {
 	l.m.Unlock()
 }
