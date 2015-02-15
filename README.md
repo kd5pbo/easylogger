@@ -5,6 +5,8 @@ A small go library providing verbose() and debug() printf-like functions.  Aimed
 
 Please see https://godoc.org/github.com/kd5pbo/easylogger for documentation.
 
+Not very well tested, but tested.  Test well before use.
+
 Quickstart
 ----------
 ```go
