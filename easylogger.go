@@ -55,6 +55,7 @@ package easylogger
 import (
 	"flag"
 	"log"
+	"sync"
 )
 
 /*
